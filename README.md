@@ -1,2 +1,229 @@
-# C-C-
-C/C++代码
+#Maze
+
+//Stack.h
+
+#pragma once
+
+template <class T>
+class stack
+{
+
+public:
+	stack()        //构造函数
+		:_arr(NULL)
+		, _top(0)
+		, _capacity(0)
+	{}
+	~stack()          //析构函数
+	{
+		if (_arr)
+		{
+			delete[] _arr;
+		}
+	}
+public:
+	void Push(const T& x)         //插入
+	{
+		_CheckCapacity();
+		_arr[_top++] = x;
+	}
+	void Pop()          //删除
+	{
+		assert(_top > 0);
+		--_top;
+	}
+	size_t Size()         //大小
+	{
+		return _top;
+	}
+	bool Empty()         //判断栈是否为空
+	{
+		//return _top == 0;
+		if (_top <= 0)
+		{
+			return true;
+		}
+		else
+			return false;
+	}
+	T& Top()        //获取栈顶元素
+	{
+		return _arr[_top - 1];
+	}
+
+protected:
+	void _CheckCapacity()
+	{
+		if (_arr == NULL)
+		{
+			_capacity = 5;
+			_arr = new T[_capacity];
+			return;
+		}
+		else if (_top == _capacity)
+		{
+			_capacity *= 2;
+			T* tmp = new T[_capacity];
+			for (size_t i = 0;i < _top;++i)
+			{
+				tmp[i] = _arr[i];
+			}
+			delete[] _arr;
+			_arr = tmp;
+		}
+	}
+protected:
+	T* _arr;
+	size_t _top;
+	size_t _capacity;
+};
+
+
+//Maze.cpp
+#define _CRT_SECURE_NO_WARNINGS 1
+
+#include <iostream>
+using namespace std;
+
+#include <assert.h>
+#include "Stack.h"
+
+struct Pos
+{
+	int _row;
+	int _col;
+};
+
+//函数声明
+void GetMaze(int* a, int n);
+bool SearchMazePath(int *a, int n, Pos entrance, stack<Pos>& paths);
+bool CheckIsAccess(int* a, int n, const Pos& next);
+
+void GetMaze(int* a, int n)   //将迷宫存到一个一维数组a里
+{
+	assert(a);
+	FILE* fout = fopen("E:\\MazeMap.txt", "r");    //以读的方式读取迷宫矩阵
+	assert(fout);
+	for (int i = 0;i < n;++i)
+	{
+		for (int j = 0;j < n;)
+		{
+			char ch = fgetc(fout);
+			if (ch == '1' || ch == '0')    //矩阵中‘0’为通路
+			{
+				a[i*n + j] = ch - '0';
+				cout << a[i*n + j]<<" ";
+				++j;
+			}
+		}
+		cout << endl;
+	}
+	cout << endl;
+}
+
+bool CheckIsAccess(int* a, int n, const Pos& next)
+{
+	int row = next._row;
+	int col = next._col;
+	if (row >= 0 && row < n && col >= 0 && col < n && a[row*n + col] == 0)
+	{
+		return  true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//寻找通路，并用栈来存储
+bool SearchMazePath(int *a, int n, Pos entrance, stack<Pos>& paths)  
+{
+	assert(a);
+	paths.Push(entrance);
+	bool isfirst = true;
+	while (!paths.Empty())
+	{
+		Pos cur = paths.Top();
+		a[cur._row*n + cur._col] = 7;   //将通路标记为7
+		
+		if (isfirst == false || cur._row == n - 1 || cur._col == n - 1 
+			|| cur._row == 0 || cur._row == 0 )    //如果找到矩阵的四个边就表示找到通路
+		{
+			return true;
+		}
+		Pos next = cur;
+
+		//判断当前元素的上路是否为通路，即是否为‘0’
+		next._row--;
+		if (CheckIsAccess(a, n, next))
+		{
+			paths.Push(next);
+			continue;
+		}
+
+		//判断当前元素的下路是否为通路
+		next = cur;
+		next._row++;
+		if (CheckIsAccess(a, n, next))
+		{
+			paths.Push(next);
+			continue;
+		}
+
+		//判断当前元素的左路是否为通路
+		next = cur;
+		next._col--;
+		if (CheckIsAccess(a, n, next))
+		{
+			paths.Push(next);
+			continue;
+		}
+
+		//判断当前元素的右路是否为通路
+		next = cur;
+		next._col++;
+		if (CheckIsAccess(a, n, next))
+		{
+			paths.Push(next);
+			continue;
+		}
+
+		paths.Pop();
+		isfirst = false;
+	}
+	return false;
+}
+
+//打印迷宫矩阵
+void PrintMaze(int* a, int n)
+{
+	for (int i = 0;i < n;++i)
+	{
+		for (int j = 0;j < n;++j)
+		{
+			cout << a[i*n + j] << " ";
+		}
+		cout << endl;
+	}
+	cout << endl;
+}
+
+
+int main()
+{
+	int size = 5;
+	int mazemap[25] = { 0 };
+	Pos entrance;
+	entrance._row = 1;
+	entrance._col = 0;
+	stack<Pos> path;
+
+	GetMaze(mazemap, size);
+	if (SearchMazePath(mazemap, size, entrance, path))
+	{
+		PrintMaze(mazemap, size);
+	}
+
+	system("pause");
+	return 0;
+}
