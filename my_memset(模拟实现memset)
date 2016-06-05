@@ -1,0 +1,26 @@
+#define _CRT_SECURE_NO_WARNINGS 1
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+
+
+void * my_memset(void *str, int ch, int n)
+{
+	assert(str);
+	char *p = (char*)str;
+	while (n--)
+	{
+		*p++ = (char)ch;
+	}
+	return str;
+}
+
+int main()
+{
+	char s1[] = "hello world";
+	my_memset(s1,42 , 7);
+	printf("%s\n", s1);
+	system("pause");
+	return 0;
+}
